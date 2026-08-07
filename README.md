@@ -60,7 +60,7 @@ round are evaluated before the stopping decision.
 
 ```bash
 for record in space/code/NPD-CVE-*.json.gz; do
-  slug=${record##*/}; slug=${slug%.json.gz}
+  slug=$(basename "$record" .json.gz)
   python adaptive_attacker/refine_loop_fromscratch.py \
     --detector vulnllmr --dataset space/code --slug "$slug" \
     --budget 5 --sync round --stop-on-any-flip
@@ -78,7 +78,7 @@ starting in the next round.
 
 ```bash
 for record in space/code/NPD-CVE-*.json.gz; do
-  slug=${record##*/}; slug=${slug%.json.gz}
+  slug=$(basename "$record" .json.gz)
   python adaptive_attacker/refine_loop_fromscratch.py \
     --detector vulnllmr --dataset space/code --slug "$slug" \
     --budget 5 --sync round
@@ -97,7 +97,7 @@ The 70 attacker generated UAF code are in `space/code/`. To evaluate detectors w
 
 ```bash
 for record in space/code/UAF-CVE-*.json.gz; do
-  slug=${record##*/}; slug=${slug%.json.gz}
+  slug=$(basename "$record" .json.gz)
   python adaptive_attacker_uaf/refine_loop_uaf.py \
     --detector vulnllmr --dataset space/code --slug "$slug" --budget 5
 done
