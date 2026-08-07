@@ -33,12 +33,16 @@ Run `third_party/setup_detectors.sh` to prepare the pinned detector sources.
 
 ## Constructing CVEBench
 
-`cvebench/` contains the code used to construct CVEBench, including repository
+`cvebench/` is the CVEBench dataset-construction pipeline: repository
 validation, context extraction, LLM task-specification generation, vulnerable
-baseline generation, validation, LLM judging, and benchmark assembly for both
-NPD and UAF. See `cvebench/README.md` for the pipeline and required input
-schema. It is source-only: raw CVE input records, repository clones, generated
-task bundles, model outputs, and historical intermediate results are omitted.
+baseline generation, validation, LLM judging, and NPD/UAF benchmark assembly.
+The artifact already provides its generated benchmark in `space/code/`: the
+accepted Qwen3.6-27B-FP8 vulnerable baselines used by the adaptive attacks.
+See `cvebench/README.md` for the pipeline and required input schema.
+
+The pipeline directory is source-only: raw CVE input records, repository
+clones, generated task bundles, model outputs, and historical intermediate
+results are omitted.
 
 ## NPD attack protocols
 
