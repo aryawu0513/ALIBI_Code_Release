@@ -14,6 +14,13 @@ This static viewer contains the released 125-item null-pointer-dereference
 undefended adaptive-attack traces for both benchmarks for OpenVul, VulnLLM-R,
 VulRAG, and VulTrial.
 
+## Trace coverage
+
+The NPD traces include both first-flip outcomes and shared-library runs that
+continue through budget exhaustion. The UAF traces stop at the first flip.
+Thus, the UAF traces support first-flip effectiveness inspection only; they do
+not provide a post-flip, budget-exhaustion comparison.
+
 All result files are gzip-compressed. The viewer reads `index.json.gz`; serve
 this directory locally with:
 

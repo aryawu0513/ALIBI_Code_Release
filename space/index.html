@@ -1094,6 +1094,7 @@ function renderHome() {
   contentEl.innerHTML = `<div class="home-wrap">
     <h1>Adaptive Attacker — ${isDefenses ? 'Defenses' : 'Results'} Dashboard</h1>
     <p class="sub">${homeRuns.length} runs across ${slugs.length} CVEs, ${systems.length} systems. Select a run from the sidebar to inspect round-by-round.</p>
+    <p class="sub" style="margin-top:-18px">Trace coverage: NPD includes first-flip outcomes and shared-library runs through budget exhaustion. UAF traces stop at the first flip, so they support first-flip inspection only.</p>
     ${metricHtml}
   </div>`;
 }
