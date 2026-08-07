@@ -2,11 +2,12 @@
 
 This artifact contains the NPD and UAF benchmarks, result viewer, adaptive
 attack code, and defense implementations. Undefended attack traces are
-included for NPD only.
+included for both benchmarks.
 
 ## Contents
 
-- `space/`: 125 NPD and 70 UAF benchmark snapshots, plus NPD attack traces.
+- `space/`: 125 NPD and 70 UAF benchmark snapshots, plus undefended attack
+  traces for both benchmarks.
 - `adaptive_attacker/`: attack loop, prompts, and detector adapters.
 - `adaptive_attacker_uaf/`: UAF attack loop and prompts.
 - `benchmark_generation/`: baseline vulnerable-code generator and prompts.
@@ -99,9 +100,9 @@ set. The shared-library prompt configuration is
 automatically by the second protocol. `--seed-library-system` is separate: it
 preloads a library created by a previous run.
 
-## USE-After-Free attack protocol
-We also provide 
-The 70 UAF snapshots are also in `space/code/`. To evaluate detectors with UAF bugs, run the following commands with the detector of choice. 
+## Use-After-Free attack protocol
+We also provide the config to show how the attack generalize to UAF.
+The 70 attacker generated UAF code are in `space/code/`. To evaluate detectors with UAF bugs, run the following commands with the detector of choice. 
 
 ```bash
 for record in space/code/UAF-CVE-*.json.gz; do
