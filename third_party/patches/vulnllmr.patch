@@ -1,0 +1,298 @@
+diff --git a/vulscan/model_zoo/src/model_zoo/litellm_model.py b/vulscan/model_zoo/src/model_zoo/litellm_model.py
+index d0123ed529ad40e771b06d6e9b62e8d2a32e3d82..171435d3fcffff3225cfbba304d7057a4728a8ba 100644
+--- a/vulscan/model_zoo/src/model_zoo/litellm_model.py
++++ b/vulscan/model_zoo/src/model_zoo/litellm_model.py
+@@ -94,7 +94,7 @@ class LiteLLMModel(LanguageModel):
+             answers.append(example["output"] if "output" in example else None)
+ 
+         # Run asynchronous batch chat completions
+-        if getattr(self, "reasoning_effort", None):
++        if hasattr(self, "reasoning_effort"):
+             temperature = 1
+             reasoning_effort = self.reasoning_effort
+             top_p = None
+diff --git a/vulscan/test/run_test.sh b/vulscan/test/run_test.sh
+index c317142adcec741f0112139f91d24fc2c3db1732..6ebe1ca8b9f9e2c39c4b5a02b400b147cf8f6e81 100644
+--- a/vulscan/test/run_test.sh
++++ b/vulscan/test/run_test.sh
+@@ -10,7 +10,6 @@ n=1
+ test_data="./datasets/test/function_level/ ./datasets/test/repo_level/"
+ language="c python java"
+ specified_model=""
+-reasoning_effort=""
+ 
+ usage() {
+   echo "Usage: $0 [options]"
+@@ -24,12 +23,11 @@ usage() {
+   echo "  -d PATH      Test data path (default: $test_data)"
+   echo "  -l LANGS     Languages (default: $language)"
+   echo "  -M MODEL     Specify model to run (default: run all models)"
+-  echo "  -e EFFORT    Reasoning effort (e.g., low, medium, high)"
+   echo "  -h           Show this help message"
+   exit 1
+ }
+ 
+-while getopts "o:r:b:t:g:m:n:d:l:M:e:h" opt; do
++while getopts "o:r:b:t:g:m:n:d:l:M:h" opt; do
+   case $opt in
+     o) output_dir="$OPTARG" ;;
+     r) requests_per_minute="$OPTARG" ;;
+@@ -40,7 +38,6 @@ while getopts "o:r:b:t:g:m:n:d:l:M:e:h" opt; do
+     d) test_data="$OPTARG" ;;
+     l) language="$OPTARG" ;;
+     M) specified_model="$OPTARG" ;;
+-    e) reasoning_effort="$OPTARG" ;;
+     h) usage ;;
+     *) usage ;;
+   esac
+@@ -67,13 +64,8 @@ models=(
+     "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B"
+     "together-deepseek-reasoner"
+     "gpt-4o"
+-    "gpt-5.3"
+-    "gpt-5.4"
+-    "gpt-5.3-codex"
+-    "gpt-5.2-codex"
+     "o3-mini"
+     "claude-3-7-sonnet-20250219"
+-    "claude-opus-4-6"
+     "gemini/gemini-3-flash-preview"
+ )
+ commercial_models=(
+@@ -81,13 +73,8 @@ commercial_models=(
+   "gpt-4o"
+   "gpt-4o-2024-11-20"
+   "gpt-5"
+-  "gpt-5.3"
+-  "gpt-5.4"
+-  "gpt-5.3-codex"
+-  "gpt-5.2-codex"
+   "o3-mini"
+   "claude-3-7-sonnet-20250219"
+-  "claude-opus-4-6"
+   "deepseek/deepseek-reasoner"
+ )
+ is_commercial_model() {
+@@ -111,12 +98,6 @@ else
+   run_models=("${models[@]}")
+ fi
+ 
+-# Build reasoning effort flag
+-reasoning_effort_flag=""
+-if [[ -n "$reasoning_effort" ]]; then
+-  reasoning_effort_flag="--reasoning_effort $reasoning_effort"
+-fi
+-
+ # Iterate over models
+ for model in "${run_models[@]}"; do
+   echo "Running model: $model"
+@@ -132,8 +113,7 @@ for model in "${run_models[@]}"; do
+         --requests_per_minute "$requests_per_minute" \
+         --save --use_cot --use_policy \
+         --batch_size "$batch_size" --together_deepseek \
+-        --max_tokens "$max_tokens" --random_cwe --n "$n" \
+-        $reasoning_effort_flag
++        --max_tokens "$max_tokens" --random_cwe --n "$n"
+     else
+       python test.py \
+         --output_dir "$output_dir" \
+@@ -143,8 +123,7 @@ for model in "${run_models[@]}"; do
+         --requests_per_minute "$requests_per_minute" \
+         --save --use_cot --use_policy \
+         --batch_size "$batch_size" \
+-        --max_tokens "$max_tokens" --random_cwe --n "$n" \
+-        $reasoning_effort_flag
++        --max_tokens "$max_tokens" --random_cwe --n "$n"
+     fi
+   else
+     python test.py \
+@@ -155,8 +134,7 @@ for model in "${run_models[@]}"; do
+       --requests_per_minute "$requests_per_minute" \
+       --save --use_cot --use_policy \
+       --batch_size "$batch_size" --tp "$tp" --vllm \
+-      --max_tokens "$max_tokens" --random_cwe --n "$n" \
+-      $reasoning_effort_flag
++      --max_tokens "$max_tokens" --random_cwe --n "$n"
+   fi
+   # Wait before the next iteration
+   echo "Waiting for GPU to release resources..."
+diff --git a/vulscan/test/test.py b/vulscan/test/test.py
+index 96a66cb20440a15ef1c91d81a88bbb90785ce9cd..8bf789d954267f0aef5a2fab0e67c087d63d9445 100644
+--- a/vulscan/test/test.py
++++ b/vulscan/test/test.py
+@@ -339,7 +339,7 @@ if __name__ == "__main__":
+     # wandb
+     for dataset_path in args.dataset_path:
+         for language in args.language:
+-            if not os.path.exists(os.path.join(dataset_path, language)):
++            if not os.path.exists(dataset_path):
+                 continue
+             name = args.output_dir.split("/")[-1]
+             # data
+@@ -378,6 +378,8 @@ if __name__ == "__main__":
+                 name = f"{dataset_path}_eval_{name}"
+                 wandb.init(project="patch_llm", name=name, entity="rucnyz")
+ 
++            print(f"[DEBUG] dataset_path={dataset_path}, language={language}")
++            print(f"[DEBUG] output_dir={args.output_dir!r} (cwd={os.getcwd()})")
+             eval_examples, _, _ = load_reasoning_data(
+                 dataset_path,
+                 output_path,
+@@ -394,6 +396,7 @@ if __name__ == "__main__":
+                 ood=args.ood,
+             )
+ 
++            print(f"[DEBUG] loaded {len(eval_examples)} eval examples")
+             eval_examples = eval_examples[: args.test_samples_num]
+             if args.ids:
+                 eval_examples = [
+@@ -408,6 +411,7 @@ if __name__ == "__main__":
+                 eval_examples = [
+                     item for item in eval_examples if str(item["idx"]) not in remove_idx
+                 ]
++            print(f"[DEBUG] after filtering: {len(eval_examples)} eval examples")
+             if eval_examples:
+                 if args.multi_run_with_related_cwe:
+                     # Step 1: Run args.multi_run_n times without policy to collect predicted CWEs
+@@ -730,7 +734,7 @@ if __name__ == "__main__":
+                                 # Find the original data for this example
+                                 original_data = None
+                                 for json_file in glob.glob(
+-                                    os.path.join(dataset_path, language, "CWE-*.json")
++                                    os.path.join(dataset_path, "CWE-*.json")
+                                 ):
+                                     with open(json_file, "r", encoding="utf-8") as f:
+                                         data = json.load(f)
+@@ -861,8 +865,16 @@ if __name__ == "__main__":
+                 )
+                 # save the output
+                 if args.save:
+-                    os.makedirs(args.output_dir, exist_ok=True)
+-                    rel_path = str(dataset_path.relative_to(PROJECT_PATH))
++                    abs_output_dir = os.path.abspath(args.output_dir)
++                    print(f"[DEBUG] saving to abs path: {abs_output_dir}")
++                    os.makedirs(abs_output_dir, exist_ok=True)
++                    try:
++                        rel_path = str(dataset_path.relative_to(PROJECT_PATH))
++                    except ValueError:
++                        # dataset lives outside the VulnLLM-R project (e.g. a
++                        # repo-level benchmark/ tree); use last two segments to
++                        # keep the output filename readable.
++                        rel_path = "_".join(dataset_path.parts[-2:])
+                     dataset_name = rel_path.replace("/", "_")
+                     model_name_parts = args.model.split("/")
+                     if len(model_name_parts) > 2:
+@@ -886,12 +898,10 @@ if __name__ == "__main__":
+                         "__multi_run" if args.multi_run_with_related_cwe else ""
+                     )
+ 
+-                    save_results(
+-                        os.path.join(
+-                            args.output_dir,
+-                            f"{args.max_tokens}__{args.n}__{dataset_name}__{'ood' if args.ood else 'full'}__{cot}__{language}__{'policy' if args.use_policy else 'no_policy'}__{model_shortname}{multi_run_suffix}.json",
+-                        ),
+-                        save_output,
+-                        args.wandb,
++                    out_file = os.path.join(
++                        abs_output_dir,
++                        f"{args.max_tokens}__{args.n}__{dataset_name}__{'ood' if args.ood else 'full'}__{cot}__{language}__{'policy' if args.use_policy else 'no_policy'}__{model_shortname}{multi_run_suffix}.json",
+                     )
+-                    print(f"Results saved to {args.output_dir}")
++                    print(f"[DEBUG] writing results file: {out_file}")
++                    save_results(out_file, save_output, args.wandb)
++                    print(f"Results saved to {abs_output_dir}")
+diff --git a/vulscan/test/test_utils/utils.py b/vulscan/test/test_utils/utils.py
+index 10b80747a7c03b259fd9aad4e0054e6112324cc0..1971b78af60cbbee4c95f0a51138f1b829620eda 100644
+--- a/vulscan/test/test_utils/utils.py
++++ b/vulscan/test/test_utils/utils.py
+@@ -183,9 +183,9 @@ def load_reasoning_data(
+     data_num = 0
+     input_dir_orig = input_dir
+     for language in ood_cwe_dict.keys():
+-        input_dir = os.path.join(input_dir_orig, language)
++        input_dir = input_dir_orig
+         cwe_count = 0
+-        for json_file in glob.glob(os.path.join(input_dir, "CWE-*.json")):
++        for json_file in sorted(glob.glob(os.path.join(input_dir, "*.json"))):
+             print(f"processing: {json_file}")
+             current_cwe = json_file.split("/")[-1].split(".")[0]
+             if ood and current_cwe not in ood_cwe_dict[language]:
+@@ -194,7 +194,7 @@ def load_reasoning_data(
+                 with open(json_file, "r", encoding="utf-8") as f:
+                     data = json.load(f)
+                 # select data that is "dataset": "primevul_pair"; only for c
+-                if "noisy_dataset" in input_dir:
++                if "noisy_dataset" in str(input_dir):
+                     data = [item for item in data if item["dataset"] == "primevul_pair"]
+                 # selected_samples = select_diverse_samples(data)
+ 
+@@ -236,7 +236,9 @@ def load_reasoning_data(
+                     data_num += 1
+                 cwe_count += 1
+             except Exception as e:
++                import traceback
+                 print(f"process {json_file} wrong: {str(e)}")
++                traceback.print_exc()
+         print(f"Total CWEs: {cwe_count}")
+     reasoning_data.insert(0, {"acc_num": 0})
+     with open(output_path, "wb") as f:
+diff --git a/vulscan/utils/get_cwe_info.py b/vulscan/utils/get_cwe_info.py
+index 535e5c5de7427dfda6ad5ae485dce9ddcd51a56d..6034a6c8b945c1d4c17054b13d4183b6944d00bd 100644
+--- a/vulscan/utils/get_cwe_info.py
++++ b/vulscan/utils/get_cwe_info.py
+@@ -12,10 +12,12 @@ def _init_cwe_descriptions():
+     cwe_df = pd.read_csv(os.path.join(PROJECT_PATH, "datasets/cwe-details.csv"))
+     cwe_descriptions = {}
+     for _, row in cwe_df.iterrows():
++        name = str(row["Name"]) if not pd.isna(row["Name"]) else ""
+         if pd.isna(row["Extended Description"]):
+-            cwe_descriptions[row["CWE-ID"]] = row["Name"] + ". " + row['Description']
++            desc = str(row["Description"]) if not pd.isna(row["Description"]) else ""
++            cwe_descriptions[row["CWE-ID"]] = name + ". " + desc
+         else:
+-            cwe_descriptions[row["CWE-ID"]] = row["Name"] + ". " + row["Extended Description"]
++            cwe_descriptions[row["CWE-ID"]] = name + ". " + str(row["Extended Description"])
+ 
+ 
+ def get_cwe_info(cwe_id: int) -> str:
+diff --git a/vulscan/utils/sys_prompts.py b/vulscan/utils/sys_prompts.py
+index 67432483fd96f1356e7e157b819ef771b2ae58b0..ec5b0967c7cf11bab81d321568b1db12f1b13a04 100644
+--- a/vulscan/utils/sys_prompts.py
++++ b/vulscan/utils/sys_prompts.py
+@@ -30,11 +30,11 @@ deepseek_sys_prompt = (
+ )
+ 
+ our_cot = """Please think step by step and follow the following procedure.
+-Step 1: understand the code and identify key instructions and program states; 
+-Step 2: come up with the constraints on the identified instructions or states to decide if the code is vulnerable; 
+-Step 3: Predict the actual program states and decide if it follows the constraints; 
++Step 1: understand the code and identify key instructions and program states;
++Step 2: come up with the constraints on the identified instructions or states to decide if the code is vulnerable;
++Step 3: Predict the actual program states and decide if it follows the constraints;
+ Step 4: Tell whether the code is vulnerable based on the analysis above
+-\n     
++\n
+ """
+ 
+ policy = "You should only focus on checking and reasoning if the code contains one of the following CWEs:"
+@@ -110,6 +110,20 @@ You need to output whether the code is vulnerable and the type of vulnerability
+ #type: N/A
+ """
+ 
++import os as _os
++_TASK_ADDITION = _os.environ.get('VL_TASK_ADDITION', '').strip()
++if _TASK_ADDITION:
++    _injection = _TASK_ADDITION + '\n'
++    long_context_reasoning_user_prompt = long_context_reasoning_user_prompt.replace(
++        '## You are given the following code snippet:',
++        _injection + '## You are given the following code snippet:', 1
++    )
++    reasoning_user_prompt = reasoning_user_prompt.replace(
++        '## You are given the following code snippet:',
++        _injection + '## You are given the following code snippet:', 1
++    )
++
++
+ reduced_reasoning_user_prompt = """\
+ You are an advanced vulnerability detection model. \
+ Your task is to check if a specific vulnerability exists in a given piece of code. \
