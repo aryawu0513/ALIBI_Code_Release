@@ -21,6 +21,9 @@ continue through budget exhaustion. The UAF traces stop at the first flip.
 Thus, the UAF traces support first-flip effectiveness inspection only; they do
 not provide a post-flip, budget-exhaustion comparison.
 
+To view only UAF items in the viewer, enter `UAF` (or `UAF-`) in the sidebar
+filter. UAF slugs have the form `UAF-CVE-…`.
+
 All result files are gzip-compressed. The viewer reads `index.json.gz`; serve
 this directory locally with:
 
