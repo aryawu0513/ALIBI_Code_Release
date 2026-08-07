@@ -6,8 +6,9 @@ included for both benchmarks.
 
 ## Contents
 
-- `space/`: 125 NPD and 70 UAF benchmark snapshots, plus undefended attack
-  traces for both benchmarks.
+- `space/`: 125 NPD and 70 UAF benchmark snapshots containing the
+  pre-generated vulnerable baselines, plus undefended attack traces for both
+  benchmarks.
 - `adaptive_attacker/`: attack loop, prompts, and detector adapters.
 - `adaptive_attacker_uaf/`: UAF attack loop and prompts.
 - `cvebench/`: source-only CVEBench construction pipeline, including LLM task

@@ -6,6 +6,12 @@ snapshots are in `../space/code/`; this directory does not include raw CVE
 records, cloned repositories, generated task bundles, model outputs, or
 historical intermediate results.
 
+The `space/code/` snapshots already contain the accepted vulnerable baseline
+implementations. They were generated during benchmark construction with
+Qwen3.6-27B-FP8, then retained only after repository validation and independent
+LLM judging. Running the released adaptive attacker starts from these
+pre-generated baselines; it does not generate them again.
+
 ## Pipeline
 
 For each input CVE/function record, the pipeline:
