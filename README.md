@@ -10,9 +10,9 @@ included for both benchmarks.
   traces for both benchmarks.
 - `adaptive_attacker/`: attack loop, prompts, and detector adapters.
 - `adaptive_attacker_uaf/`: UAF attack loop and prompts.
-- `benchmark_generation/`: baseline vulnerable-code generator and prompts.
 - `cvebench/`: source-only CVEBench construction pipeline, including LLM task
-  specification generation and NPD/UAF benchmark builders.
+  specification generation, vulnerable-baseline generation, and NPD/UAF
+  benchmark builders.
 - `defenses/`: defense prompts and comment-screening code.
 - `third_party/`: pinned detector sources and local overlay patches.
 
@@ -32,7 +32,7 @@ Run `third_party/setup_detectors.sh` to prepare the pinned detector sources.
 
 ## Generating baseline vulnerable code
 
-`benchmark_generation/generate_baseline.py` is the first-stage attacker. Given
+`cvebench/generate_baseline.py` is the first-stage attacker. Given
 a prepared task bundle, it asks a model to fill the function stub with a clean,
 deliberately vulnerable implementation. This precedes the adaptive comment
 attack; it does not itself validate that the output compiles, passes tests, or
@@ -44,16 +44,16 @@ and a matching task directory for each slug containing `task.md` and
 For example, to generate all NPD baseline implementations:
 
 ```bash
-python benchmark_generation/generate_baseline.py task_metadata.jsonl \
+python cvebench/generate_baseline.py task_metadata.jsonl \
   --tasks-dir prepared_tasks --output-dir generated_baselines \
-  --config benchmark_generation/config_npd.yaml \
+  --config cvebench/config_npd.yaml \
   --model MODEL --base-url http://HOST:PORT/v1 --workers 4
 ```
 
 This writes `generated_baselines/<slug>/attacker_output.cc`, with the intended
-site marked `/* NPD site */`. Use `config_uaf.yaml` for UAF; it marks the unsafe
-reuse with `/* UAF site */`. The prepared task bundles and generated outputs are
-not included in this artifact.
+site marked `/* NPD site */`. Use `cvebench/config_uaf.yaml` for UAF; it marks
+the unsafe reuse with `/* UAF site */`. The prepared task bundles and generated
+outputs are not included in this artifact.
 
 ## Constructing CVEBench
 
