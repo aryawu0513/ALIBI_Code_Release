@@ -11,6 +11,8 @@ included for both benchmarks.
 - `adaptive_attacker/`: attack loop, prompts, and detector adapters.
 - `adaptive_attacker_uaf/`: UAF attack loop and prompts.
 - `benchmark_generation/`: baseline vulnerable-code generator and prompts.
+- `cvebench/`: source-only CVEBench construction pipeline, including LLM task
+  specification generation and NPD/UAF benchmark builders.
 - `defenses/`: defense prompts and comment-screening code.
 - `third_party/`: pinned detector sources and local overlay patches.
 
@@ -52,6 +54,15 @@ This writes `generated_baselines/<slug>/attacker_output.cc`, with the intended
 site marked `/* NPD site */`. Use `config_uaf.yaml` for UAF; it marks the unsafe
 reuse with `/* UAF site */`. The prepared task bundles and generated outputs are
 not included in this artifact.
+
+## Constructing CVEBench
+
+`cvebench/` contains the code used to construct CVEBench, including repository
+validation, context extraction, LLM task-specification generation, vulnerable
+baseline generation, validation, LLM judging, and benchmark assembly for both
+NPD and UAF. See `cvebench/README.md` for the pipeline and required input
+schema. It is source-only: raw CVE input records, repository clones, generated
+task bundles, model outputs, and historical intermediate results are omitted.
 
 ## NPD attack protocols
 
