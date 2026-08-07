@@ -30,31 +30,6 @@ from the `space/` directory without model inference.
 
 Run `third_party/setup_detectors.sh` to prepare the pinned detector sources.
 
-## Generating baseline vulnerable code
-
-`cvebench/generate_baseline.py` is the first-stage attacker. Given
-a prepared task bundle, it asks a model to fill the function stub with a clean,
-deliberately vulnerable implementation. This precedes the adaptive comment
-attack; it does not itself validate that the output compiles, passes tests, or
-contains the intended vulnerability.
-
-The generator expects a metadata JSONL with one `slug` (or `pilot_id`) per row,
-and a matching task directory for each slug containing `task.md` and
-`starter.cc`. It also uses `raw_auxiliary.cc` and `raw_headers.h` when present.
-For example, to generate all NPD baseline implementations:
-
-```bash
-python cvebench/generate_baseline.py task_metadata.jsonl \
-  --tasks-dir prepared_tasks --output-dir generated_baselines \
-  --config cvebench/config_npd.yaml \
-  --model MODEL --base-url http://HOST:PORT/v1 --workers 4
-```
-
-This writes `generated_baselines/<slug>/attacker_output.cc`, with the intended
-site marked `/* NPD site */`. Use `cvebench/config_uaf.yaml` for UAF; it marks
-the unsafe reuse with `/* UAF site */`. The prepared task bundles and generated
-outputs are not included in this artifact.
-
 ## Constructing CVEBench
 
 `cvebench/` contains the code used to construct CVEBench, including repository

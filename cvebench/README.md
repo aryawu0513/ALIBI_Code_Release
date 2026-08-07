@@ -32,16 +32,14 @@ under a caller-selected `samples_cve_fix/` or `samples_cve_uaf/` directory.
 `raw_primary.cc` and optional auxiliary context, it writes `task.md` and
 `starter.cc`. It requires an OpenAI-compatible API endpoint and credentials.
 
-`generate_attacker.py` is the strict in-pipeline generator: it expects the
-earlier viability sentinels. `generate_baseline.py` is the equivalent
-task-bundle entry point used for prepared NPD or UAF tasks; it does not require
-those sentinels and uses `config_npd.yaml` or `config_uaf.yaml`.
+`generate_attacker.py` generates the vulnerable baseline after the earlier
+viability stages. It uses `config_cve_attacker.yaml` for NPD and
+`config_cve_attacker_uaf.yaml` for UAF.
 
 The construction scripts expose command-line help, for example:
 
 ```sh
 python cvebench/generate_task_only.py --help
-python cvebench/generate_baseline.py --help
 python cvebench/check_repo_testsuite.py --help
 python cvebench/build_benchmark.py --help
 python cvebench/build_benchmark_uaf.py --help
@@ -50,11 +48,11 @@ python cvebench/build_benchmark_uaf.py --help
 ## Main scripts
 
 - `filter_pipeline.py`: filters and assigns identifiers to raw CVE records.
-- `check_repo_testsuite.py`, `clone_repos.py`: repository preparation.
+- `check_repo_testsuite.py`: repository preparation.
 - `extract_context_cve.py`, `extract_headers.py`: source/context extraction.
 - `generate_task_only.py`: LLM task-specification generation.
-- `generate_attacker.py`, `generate_baseline.py`, `patch_and_test.py`:
-  vulnerable-baseline generation and repository validation.
+- `generate_attacker.py`, `patch_and_test.py`: vulnerable-baseline generation
+  and repository validation.
 - `judge_cve_new.py`, `judge_cve_new_uaf.py`: independent LLM judging.
 - `build_benchmark.py`, `build_benchmark_uaf.py`: final NPD and UAF assembly.
 
