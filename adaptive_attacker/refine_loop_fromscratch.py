@@ -716,7 +716,7 @@ def main() -> None:
     parser.add_argument("--model", default=None,
                         help="Detector model ID — required for openvul, vultrial, vulrag, repoaudit")
     parser.add_argument("--detector",
-                        choices=["openvul", "vulnllmr", "repoaudit", "vultrial", "vulrag", "gpt55"],
+                        choices=["openvul", "vulnllmr", "vultrial", "vulrag"],
                         default="openvul")
     parser.add_argument("--detector-url", default=os.environ.get("DETECTOR_URL"))
     parser.add_argument("--defense", default=None,
@@ -727,7 +727,7 @@ def main() -> None:
                              "detector (--detector-url) already has its defense baked in "
                              "server-side via DEFENSE=<tag>, and this flag is ignored there.")
     parser.add_argument("--refiner-model", default="Qwen/Qwen3.6-27B-FP8")
-    parser.add_argument("--refiner-temperature", type=float, default=0.7)
+    parser.add_argument("--refiner-temperature", type=float, default=1.0)
     parser.add_argument("--tp", type=int, default=1)
     parser.add_argument("--budget", type=int, default=BUDGET)
     parser.add_argument("--sync", choices=["round", "immediate"], default="round")
@@ -769,8 +769,8 @@ def main() -> None:
                              "the gate is the only thing confirming a slug is attackable.")
     args = parser.parse_args()
 
-    MODEL_REQUIRED = {"openvul", "vultrial", "vulrag", "repoaudit"}
-    if args.detector in MODEL_REQUIRED and not args.detector_url and args.model is None:
+    MODEL_REQUIRED = {"openvul", "vultrial", "vulrag"}
+    if args.detector in MODEL_REQUIRED and args.model is None:
         parser.error(f"--model is required for --detector {args.detector}")
 
     SLUG = args.slug
@@ -795,20 +795,11 @@ def main() -> None:
     # Source of any cached baseline analysis used by D3.
     baseline_source = (args.seed_round0_from, args.seed_round0_tag) if args.seed_round0_from else None
 
-    if args.detector_url:
-        from detector_http import HttpDetectorClient
-        detector = HttpDetectorClient(base_url=args.detector_url)
-        if args.defense:
-            print(f"[defense] --defense {args.defense} ignored — {args.detector_url} is a "
-                  f"served detector; its defense is whatever DEFENSE=<tag> it was launched with.")
-    elif args.detector == "vulnllmr":
+    if args.detector == "vulnllmr":
         from detector_vulnllmr import VulnLLMRDetector
         detector = VulnLLMRDetector(tp=args.tp,
                                      defense_text=defense_text, steering=steering,
                                      baseline_source=baseline_source)
-    elif args.detector == "repoaudit":
-        from detector_repoaudit import RepoAuditDetector
-        detector = RepoAuditDetector(model_name=args.model)
     elif args.detector == "vultrial":
         from detector_vultrial import VulTrialDetector
         detector = VulTrialDetector(model=args.model, mode="npd",
@@ -818,12 +809,6 @@ def main() -> None:
         from detector_vulrag import VulRAGDetector
         detector = VulRAGDetector(model=args.model, defense_text=defense_text, steering=steering,
                                    baseline_source=baseline_source)
-    elif args.detector == "gpt55":
-        from detector_gpt55 import GPT55Detector
-        detector = GPT55Detector(model=args.model or "gpt-5.5")
-        if args.defense:
-            print(f"[defense] --defense {args.defense} ignored — GPT55Detector "
-                  f"doesn't yet support defense_text.")
     else:
         from detector_openvul import OpenVulDetector
         detector = OpenVulDetector(model_id=args.model, tp=args.tp,

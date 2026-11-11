@@ -36,7 +36,7 @@ Run `third_party/setup_detectors.sh` to prepare the pinned detector sources.
 `cvebench/` is the CVEBench dataset-construction pipeline: repository
 validation, context extraction, LLM task-specification generation, vulnerable
 baseline generation, validation, LLM judging, and NPD/UAF benchmark assembly.
-The artifact already provides its generated benchmark in `space/code/`: the
+The artifact provides its generated benchmark in `space/code/`: the
 accepted Qwen3.6-27B-FP8 vulnerable baselines used by the adaptive attacks.
 See `cvebench/README.md` for the pipeline and required input schema.
 
