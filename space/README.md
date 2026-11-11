@@ -1,12 +1,3 @@
----
-title: ALIBI Attacking Code Auditors Via Comments
-emoji: 💻
-colorFrom: pink
-colorTo: gray
-sdk: static
-pinned: false
----
-
 # ALIBI result viewer
 
 This static viewer contains the released 109-item null-pointer-dereference
