@@ -9,7 +9,7 @@ pinned: false
 
 # ALIBI result viewer
 
-This static viewer contains the released 125-item null-pointer-dereference
+This static viewer contains the released 109-item null-pointer-dereference
 (NPD) benchmark and 70-item use-after-free (UAF) benchmark. It also contains
 undefended adaptive-attack traces for both benchmarks for OpenVul, VulnLLM-R,
 VulRAG, and VulTrial.

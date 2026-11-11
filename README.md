@@ -6,16 +6,22 @@ included for both benchmarks.
 
 ## Contents
 
-- `space/`: 125 NPD and 70 UAF benchmark snapshots containing the
-  pre-generated vulnerable baselines, plus undefended attack traces for both
-  benchmarks.
-- `adaptive_attacker/`: attack loop, prompts, and detector adapters.
+- `space/`: the 109 NPD and 70 UAF benchmark snapshots containing the
+  pre-generated vulnerable baselines, plus undefended attack traces and
+  detector reasoning for both benchmarks (including full VulTrial debates),
+  browsable through a static viewer.
+- `adaptive_attacker/`: attack loop, prompts, detector adapters, the
+  generic-comment baseline, the no-surrogate (self-reason) comment generator,
+  and the replay script used for the offline attacker.
 - `adaptive_attacker_uaf/`: UAF attack loop and prompts.
 - `cvebench/`: source-only CVEBench construction pipeline, including LLM task
   specification generation, vulnerable-baseline generation, and NPD/UAF
   benchmark builders.
 - `defenses/`: defense prompts and comment-screening code.
 - `third_party/`: pinned detector sources and local overlay patches.
+- `scripts/reproduce_tables.py`: recomputes the paper's attack-effectiveness
+  tables from the released traces.
+- `results/`: per-item offline-attacker outcomes used by the script above.
 
 ## Setup
 
@@ -48,7 +54,7 @@ results are omitted.
 
 The released NPD benchmark snapshots are directly usable through
 `--dataset space/code`. The commands below run the selected protocol over all
-125 NPD slugs. Each invocation handles one slug, so its output is isolated and
+109 NPD slugs. Each invocation handles one slug, so its output is isolated and
 resumable under `adaptive_attacker/results/`.
 
 ### Independent, first-flip attack
@@ -90,6 +96,38 @@ set. The shared-library prompt configuration is
 `adaptive_attacker/config_refiner_fromscratch_withlibrary.yaml`; it is chosen
 automatically by the second protocol. `--seed-library-system` is separate: it
 preloads a library created by a previous run.
+
+## Offline attacker and baselines
+
+The offline attacker never queries the target. It replays comments that
+flipped a local surrogate, or comments drafted only from the attacker's own
+bug-finding reasoning, against the target once each:
+
+```bash
+# comments drafted from the attacker's own reasoning (no detector queried)
+python adaptive_attacker/gen_selfreason_round0.py --dataset space/code
+
+# replay a source pool's comments against a target detector
+python adaptive_attacker/transfer_replay.py --target vulrag --sources openvul \
+  --payloads final --out-root adaptive_attacker/results/transfer/vulrag_from_openvul
+```
+
+The generic single-comment baseline inserts one fixed comment above the
+dereference site, using `adaptive_attacker/pointer_name.jsonl`:
+
+```bash
+python adaptive_attacker/baseline_generic_annotation.py --detector vulnllmr
+```
+
+## Reproducing the tables
+
+```bash
+python scripts/reproduce_tables.py
+```
+
+This recomputes the attack-effectiveness tables (interactive vs. offline
+attacker, generic baseline, presentation strategies, and UAF) from `space/`
+and `results/` without running any model.
 
 ## Use-After-Free attack protocol
 We also provide the config to show how the attack generalize to UAF.
